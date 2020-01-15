@@ -61,7 +61,7 @@ def testBD():
     mail = content['mail']
 
 
-    dateNow = datetime.datetime.now()
+    dateNow = datetime.now()
     dateNow = dateNow.strftime("%d%m%Y%H%M%S-%f")
     uniqueID = login.upper()+'-'+dateNow
 
@@ -228,4 +228,36 @@ def verifToken():
         print("heure actuelle : ", datetime.fromtimestamp(int(date_actuelle_decoupe[0])), " heure incremente ",datetime.fromtimestamp(int(token_decoupe[2])))
         return "token valide"
 
-    
+@app.route('/SuppUser', methods= ['POST'])
+def SuppUser():
+
+
+    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    mycursor = conn.cursor()
+
+    #Création du JSON
+    content = request.json
+
+    #Récupération des données du JSON envoyé
+    login = content['login']
+    print("LOGIN --> ",login)
+
+    #Creation cursor
+    mycursor.execute("""SELECT * FROM Utilisateur WHERE login = :login """,
+    login = login)
+
+    #Exécution de la requête sql
+    myresult = mycursor.fetchall()
+    date_actuelle = date.today()
+
+    #Si la longueur du resultat est égale a 0 aucun user ne possede le login rentré 
+    if(len(myresult) == 0):
+        texteResultat = "Cet utilisateur n'existe pas"
+        conn.close()
+    else:
+        mycursor.execute("""DELETE FROM Utilisateur WHERE login = :login """,login=login)
+        texteResultat = "deleted"
+        conn.commit()
+        conn.close()
+        
+    return {"result":texteResultat}
