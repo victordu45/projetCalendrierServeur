@@ -358,6 +358,18 @@ def addCalendar():
     conn.close()
     return "succes"
 
+@app.route('/getProfilCalendar', methods= ['POST'])
+def getProfilCalendar():
+    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    mycursor = conn.cursor()
+
+    content = request.json
+
+    uniqueID = content['uniqueID']
+    idCalend = content['idCalendrier']
+
+    print('idCalendrier = ', idCalend)
+    return {"data":"data"}
 
 @app.route('/getProfil', methods= ['POST'])
 def getProfil():
@@ -496,11 +508,30 @@ def getMessages():
     content = request.json
     # Récupération des données du JSON envoyé
     idCalendrier = content['idCalendrier']
+    offsetRecu = content['offset']
     uniqueID = content['uniqueID']
+    # offsetMax = 20
+
+    print("[1]offset recu  = " , offsetRecu )
+    mycursor.execute("""SELECT count(idmessage) FROM message WHERE idcalendrier = :idCalendrier""",idCalendrier = idCalendrier)
+    offset = mycursor.fetchone()
+    print("offset ------> "  , offset[0])
+    offsetMax = offset[0]
+    if(offsetRecu == 0):
+        
+        offset = offset[0] - 10
+    else:
+        offset = offsetRecu - 10
+    
+    print("[2]offset recu  = " , offsetRecu , " offsetMax = ", offsetMax)
+    
+    if(offset < 0):
+        offset = 0
+    
     mycursor.execute( """SELECT m.idmessage, m.contenu, m.datemessage, c.couleurTheme, m.idproprietaire 
 FROM   message m, calendrier c WHERE c.idcalendrier = m.idcalendrier AND m.IDCALENDRIER = :idCalendrier
 ORDER BY datemessage
-OFFSET 0 ROWS FETCH NEXT 200 ROWS ONLY """, idCalendrier=idCalendrier)
+OFFSET :offset ROWS FETCH NEXT :offsetMax ROWS ONLY """, idCalendrier=idCalendrier,offset = offset,offsetMax = offsetMax)
 
     myresult = mycursor.fetchall()
     # print("myresult" , myresult)
@@ -520,6 +551,7 @@ OFFSET 0 ROWS FETCH NEXT 200 ROWS ONLY """, idCalendrier=idCalendrier)
                 "contenu" : bytes(i[1].read()).decode("utf-8"),
                 "datemessage" : i[2],
                 "color" : i[3],
+                "offset" : offset,
                 "idUtilisateur" : id
             }
             texteResultat[str(compteurIdJson)] = json
