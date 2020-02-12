@@ -7,16 +7,14 @@ from datetime import date
 from datetime import datetime, timedelta
 import time
 
-ip = "192.168.0.143"
-bd = "baussenac"
+connexion = 'baussenac/azerty@192.168.0.144:1521/xe'
 
 @app.route('/login' , methods=['POST'])
 def conn_bdd():
-    global ip
-    global bd
+    global connexion
 
     # conn = cx_Oracle.connect(bd,"azerty",ip)
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    conn = cx_Oracle.connect(connexion)
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -43,11 +41,8 @@ def conn_bdd():
 
 @app.route('/register', methods = ['POST'])
 def testBD():
-    global ip
-    global bd
-    print('ok')
-    # conn = cx_Oracle.connect(bd,"azerty",ip)
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    global connexion
+    conn = cx_Oracle.connect(connexion)
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -97,10 +92,8 @@ def testBD():
 
 @app.route('/addNewEvent', methods= ['POST'])
 def addNewEvent():
-    global ip
-    global bd
-    # conn = cx_Oracle.connect(bd,"azerty",ip)
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    global connexion
+    conn = cx_Oracle.connect(connexion)
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -145,10 +138,10 @@ def addNewEvent():
 
 @app.route('/getEventsFromPersonalCalendar', methods= ['POST'])
 def getEventsFromPersonalCalendar():
-    global ip
-    global bd
+    global connexion
+
     # conn = cx_Oracle.connect(bd,"azerty",ip)
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    conn = cx_Oracle.connect(connexion)
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -184,9 +177,8 @@ def getEventsFromPersonalCalendar():
 
 @app.route('/getPersonalCalendar', methods= ['POST'])
 def getPersonalCalendar():
-    global ip
-    global bd
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    global connexion
+    conn = cx_Oracle.connect(connexion)
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -220,9 +212,8 @@ def getPersonalCalendar():
 
 @app.route('/getSharedCalendars', methods= ['POST'])
 def getSharedCalendar():
-    global ip
-    global bd
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    global connexion
+    conn = cx_Oracle.connect(connexion)
     mycur = conn.cursor()
 
     #Création du JSON
@@ -263,8 +254,50 @@ AND UtilisateurCalendrierInvite.idUtilisateur != c.idAdministrateur AND Utilisat
     
     #return {"result":texteResultat}
 
+@app.route('/getMembers', methods=['POST'])
+def getMembers():
+    global connexion
+    conn = cx_Oracle.connect(connexion)
+    mycur = conn.cursor()
+
+    content = request.json
+    idcal = content['idCal']
+
+    mycur.execute("""SELECT login FROM utilisateur WHERE uniqueID IN (SELECT idUtilisateur FROM utilisateurCalendrier WHERE idCalendrier = :idCal) ORDER BY login ASC""",idCal = idcal)
+
+    myresult = mycur.fetchall()
+    texteResultat = {}
+    compteurIdJson = 0
+    if(len(myresult) > 0):
+        for i in myresult:
+            json = {
+                "login" : i[0],
+            }
+            texteResultat[str(compteurIdJson)] = json
+            compteurIdJson += 1
+    else:
+        texteResultat = {"vide" : "vide"}
+    return texteResultat
 
 
+
+@app.route('/getInfos', methods=['POST'])
+def getInfos():
+    global connexion
+    conn = cx_Oracle.connect(connexion)
+    mycur = conn.cursor()
+
+    content = request.json
+
+    idcal = content['idCal']
+    mycur.execute("""SELECT login FROM utilisateur WHERE uniqueID = (SELECT idAdministrateur FROM calendrier WHERE idCalendrier = :idCal)""", idCal = idcal)
+    myresult = mycur.fetchone()
+    admin = myresult[0]
+    mycur.execute("""SELECT * FROM utilisateurCalendrier WHERE idCalendrier = :idCal""", idCal = idcal)
+    myresult = mycur.fetchall()
+    compteur = len(myresult)
+
+    return {'admin':admin, 'nombre':compteur}
 @app.route('/generateToken', methods= ['POST'])
 def generateToken():
 
@@ -294,10 +327,9 @@ def generateToken():
 
 @app.route('/verifToken', methods= ['POST'])
 def verifToken():
-    global ip
-    global bd
+    global connexion
 
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    conn = connexion
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -333,10 +365,10 @@ def verifToken():
 
 @app.route('/addCalendar', methods= ['POST'])
 def addCalendar():
-
+    global connexion
     #unique id
     #id calendar
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    conn = cx_Oracle.connect(connexion)
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -360,7 +392,8 @@ def addCalendar():
 
 @app.route('/getProfilCalendar', methods= ['POST'])
 def getProfilCalendar():
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    global connexion
+    conn = cx_Oracle.connect(connexion)
     mycursor = conn.cursor()
 
     content = request.json
@@ -373,7 +406,8 @@ def getProfilCalendar():
 
 @app.route('/getProfil', methods= ['POST'])
 def getProfil():
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    global connexion
+    conn = cx_Oracle.connect(connexion)
     mycursor = conn.cursor()
 
     content = request.json
@@ -438,9 +472,9 @@ def getProfil():
 
 @app.route('/suppEvent', methods= ['POST'])
 def suppEvent():
+    global connexion
 
-
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    conn = cx_Oracle.connect(connexion)
     mycursor = conn.cursor()
     # Création du JSON
     content = request.json
@@ -468,9 +502,9 @@ def suppEvent():
 
 @app.route('/modifEvent', methods= ['POST'])
 def modifEvent():
+    global connexion
 
-
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    conn = cx_Oracle.connect(connexion)
     mycursor = conn.cursor()
     # Création du JSON
     content = request.json
@@ -502,7 +536,8 @@ def modifEvent():
 
 @app.route('/getMessages',methods=['POST'])
 def getMessages():
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    global connexion
+    conn = cx_Oracle.connect(connexion)
     mycursor = conn.cursor()
     # Création du JSON
     content = request.json
@@ -517,7 +552,7 @@ def getMessages():
     offset = mycursor.fetchone()
     print("offset ------> "  , offset[0])
     offsetMax = offset[0]
-    if(offsetRecu == 0):
+    if(offsetRecu == -1):
         
         offset = offset[0] - 10
     else:
@@ -525,37 +560,39 @@ def getMessages():
     
     print("[2]offset recu  = " , offsetRecu , " offsetMax = ", offsetMax)
     
-    if(offset < 0):
-        offset = 0
+    if(offsetRecu >= -1) :
     
-    mycursor.execute( """SELECT m.idmessage, m.contenu, m.datemessage, c.couleurTheme, m.idproprietaire 
-FROM   message m, calendrier c WHERE c.idcalendrier = m.idcalendrier AND m.IDCALENDRIER = :idCalendrier
-ORDER BY datemessage
-OFFSET :offset ROWS FETCH NEXT :offsetMax ROWS ONLY """, idCalendrier=idCalendrier,offset = offset,offsetMax = offsetMax)
+        mycursor.execute( """SELECT m.idmessage, m.contenu, m.datemessage, c.couleurTheme, m.idproprietaire, u.login 
+    FROM   message m, calendrier c,utilisateur u WHERE c.idcalendrier = m.idcalendrier AND u.uniqueID = m.idproprietaire AND m.IDCALENDRIER = :idCalendrier
+    ORDER BY datemessage
+    OFFSET :offset ROWS FETCH NEXT :offsetMax ROWS ONLY """, idCalendrier=idCalendrier,offset = offset,offsetMax = offsetMax)
 
-    myresult = mycursor.fetchall()
-    # print("myresult" , myresult)
-    compteurIdJson = 0
-    texteResultat = {}
-    # print("len myresult" , len(myresult))
-    if(len(myresult) > 0):
-        for i in myresult:
-            # print("type du contenu -->",type(i[1]))
-            # print(bytes(i[1].read()).decode("utf-8"))
-            if uniqueID == i[4]:
-                id = uniqueID
-            else:
-                id = i[4] 
-            json = {
-                "idmessage" : i[0],
-                "contenu" : bytes(i[1].read()).decode("utf-8"),
-                "datemessage" : i[2],
-                "color" : i[3],
-                "offset" : offset,
-                "idUtilisateur" : id
-            }
-            texteResultat[str(compteurIdJson)] = json
-            compteurIdJson += 1
+        myresult = mycursor.fetchall()
+        # print("myresult" , myresult)
+        compteurIdJson = 0
+        texteResultat = {}
+        # print("len myresult" , len(myresult))
+        if(len(myresult) > 0):
+            for i in myresult:
+                # print("type du contenu -->",type(i[1]))
+                # print(bytes(i[1].read()).decode("utf-8"))
+                if uniqueID == i[4]:
+                    id = uniqueID
+                else:
+                    id = i[4] 
+                json = {
+                    "idmessage" : i[0],
+                    "contenu" : bytes(i[1].read()).decode("utf-8"),
+                    "datemessage" : i[2],
+                    "color" : i[3],
+                    "offset" : offset,
+                    "idUtilisateur" : id,
+                    "login" : i[5]
+                }
+                texteResultat[str(compteurIdJson)] = json
+                compteurIdJson += 1
+        else:
+            texteResultat = {"vide" : "vide"}
     else:
         texteResultat = {"vide" : "vide"}
     conn.close()
@@ -563,8 +600,8 @@ OFFSET :offset ROWS FETCH NEXT :offsetMax ROWS ONLY """, idCalendrier=idCalendri
 
 @app.route('/createMessage', methods= ['POST'])
 def createMessage():
-
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    global connexion
+    conn = cx_Oracle.connect(connexion)
     mycursor = conn.cursor()
     # Création du JSON
     content = request.json
@@ -585,8 +622,8 @@ def createMessage():
 
 @app.route('/getUsersFromCalendar', methods= ['POST'])
 def getUsersFromCalendar():
-
-    conn = cx_Oracle.connect('baussenac/azerty@192.168.0.143:1521/xe')
+    global connexion
+    conn = cx_Oracle.connect(connexion)
     mycursor = conn.cursor()
     # Création du JSON
     content = request.json
