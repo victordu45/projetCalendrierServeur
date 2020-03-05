@@ -7,7 +7,7 @@ from datetime import date
 from datetime import datetime, timedelta
 import time
 
-connexion = 'baussenac/azerty@192.168.0.144:1521/xe'
+connexion = 'baussenac/azerty@192.168.0.145:1521/xe'
 
 @app.route('/login' , methods=['POST'])
 def conn_bdd():
@@ -62,15 +62,31 @@ def testBD():
     uniqueID = login.upper()+'-'+dateNow
 
     #Creation cursor
-    mycursor.execute("""SELECT * FROM Utilisateur WHERE login = :login """,
-    login = login)
+    mycursor.execute("""SELECT * FROM Utilisateur WHERE login = :login """, login = login)
 
     #Exécution de la requête sql
     myresult = mycursor.fetchall()
-    date_actuelle = date.today()
 
-    #Si la longueur du resultat est égale a 0 aucun user ne possede le login rentré 
-    if(len(myresult) == 0):
+    if(len(myresult) != 0):
+        login = 'Erreur'
+        a = 1
+    else:
+        login = ''
+    #Creation cursor
+    mycursor.execute("""SELECT * FROM Utilisateur WHERE email = :mail""", mail = mail)
+
+    #Exécution de la requête sql
+    myresult = mycursor.fetchall()
+
+    if(len(myresult) != 0):
+        mail = 'Erreur'
+        a = 1
+    else:
+        login = ''
+
+    date_actuelle = date.today()
+    #Si a est égale a 1 aucun user ne possede le login ou adresse mail rentré 
+    if(a != 1):
        #On peut alors créer le nouveau user avec son mot de passe, son nom, son prénom et son login
         mycursor.execute("""INSERT INTO Utilisateur VALUES (:uniqueID, :login, :password, :mail, '0623605498','125' ,:date_actuelle ,:surname, :name)""",uniqueID=uniqueID,login=login,password=password, mail=mail,date_actuelle=date_actuelle,surname=surname, name=name)
 
@@ -84,11 +100,12 @@ def testBD():
         texteResultat = "added"
         conn.commit()
         conn.close()
+        return {"result" : "added", "Login" : login, 'Mail' : mail}
     else:
         #Sinon on renvoit un message d'erreur
-        texteResultat = "Ce login est déjà utilisé"
         conn.close()
-    return {"result":texteResultat}
+        return {"Login" : login, "Mail" : mail}
+        ++b  
 
 @app.route('/addNewEvent', methods= ['POST'])
 def addNewEvent():
@@ -110,6 +127,7 @@ def addNewEvent():
     
     dateDebutConcatene = dateDebut + " " + heureDebut
     date_debut = datetime.strptime(dateDebutConcatene, '%Y-%m-%d %H:%M')
+    print(date_debut)
     dateFinConcatene = dateFin + " " + heureFin
     date_fin = datetime.strptime(dateFinConcatene, '%Y-%m-%d %H:%M')
     # print(dateDebutConcatene + "  " + dateFinConcatene)
@@ -118,16 +136,11 @@ def addNewEvent():
     dateNow = datetime.now()
     dateNow = dateNow.strftime("%d%m%Y%H%M%S-%f")
     idEvenement = nom.upper()+'-'+ dateNow
-    print("type idEv  -->", type(idEvenement))
     print("type idCal -->", idEvenement)
-    print("type date_debut  -->", type(date_debut))
-    print(" date_debut -->", date_debut)
-    print("type nom  -->", type(nom))
+    print("date_debut -->", date_debut)
     print("nom -->", nom)
-    print("type description  -->", type(description))
-    print(" description -->", description)
-    print("type date_fin  -->", type(date_fin))
-    print(" date_fin -->", date_fin)
+    print("description -->", description)
+    print("date_fin -->", date_fin)
 
     mycursor.execute("""INSERT INTO evenement (idEvenement,datedebut,nomevenement,description,datefin) VALUES (:idEvenement,:dateDebut,:nomEvenement,:description,:dateFin) """,idEvenement=idEvenement, dateDebut = date_debut, nomEvenement = nom, description = description, dateFin = date_fin)
     mycursor.execute("""INSERT INTO calendrierEvenement (idcalendrier,idevenement) VALUES (:idCalendrier,:idEvenement) """,idCalendrier = idCalendar,idEvenement=idEvenement)
@@ -150,7 +163,7 @@ def getEventsFromPersonalCalendar():
     uniqueID = content['uniqueID']
     idCalendar = content['idCalendar']
     print(idCalendar)
-    mycursor.execute("""SELECT e.nomEvenement, c.couleurTheme,e.dateDebut,e.dateFin FROM evenement e, calendrierevenement ce, calendrier c WHERE 
+    mycursor.execute("""SELECT e.nomEvenement, c.couleurTheme,to_char(e.dateDebut,'YYYY-MM-DD HH24:MI'),to_char(e.dateFin, 'YYYY-MM-DD HH24:MI'), e.description FROM evenement e, calendrierevenement ce, calendrier c WHERE 
     e.idEvenement = ce.idEvenement AND ce.idCalendrier = c.idCalendrier AND ce.idCalendrier = :idCalendrier """, idCalendrier = idCalendar)
     myresult = mycursor.fetchall()
     compteurIdJson = 0
@@ -162,8 +175,8 @@ def getEventsFromPersonalCalendar():
                 "nomEvenement" : i[0],
                 "couleurTheme" : i[1],
                 "dateDebut" : i[2],
-                "dateFin" : i[3]
-            
+                "dateFin" : i[3],
+                "description" : i[4].read()
             }
             texteResultat[str(compteurIdJson)] = json
             compteurIdJson += 1
@@ -185,8 +198,7 @@ def getPersonalCalendar():
     content = request.json
     uniqueID = content['uniqueID']
     #Renvois tous les calendrier de l'utilisateur (perso)
-    mycursor.execute("""SELECT c.idCalendrier, c.nomCalendrier, c.description, c.couleurtheme FROM calendrier c 
-    WHERE c.idAdministrateur = :uniqueID  """,uniqueID=uniqueID)
+    mycursor.execute("""SELECT c.idCalendrier, c.nomCalendrier, c.description, c.couleurtheme FROM calendrier c WHERE c.idAdministrateur = :uniqueID  """,uniqueID=uniqueID)
     
     myresult = mycursor.fetchall()
     compteurIdJson = 0
@@ -253,6 +265,26 @@ AND UtilisateurCalendrierInvite.idUtilisateur != c.idAdministrateur AND Utilisat
     # conn.close()
     
     #return {"result":texteResultat}
+@app.route('/getMembersWritable', methods=['POST'])
+def getMembersWritable():
+    global connexion
+    conn = cx_Oracle.connect(connexion)
+    mycur = conn.cursor()
+
+    content = request.json
+    idcal = content['idCal']
+
+    mycur.execute("""SELECT u.login, uc.droits FROM utilisateur u, utilisateurcalendrier uc WHERE u.uniqueid = uc.idutilisateur AND idcalendrier = :idCal""", idCal = idcal)
+    myresult = mycur.fetchall()
+    resultat = {}
+    for i in myresult:
+        resultat[i[0]] = i[1]=='w'
+
+    print(resultat)
+
+    return resultat
+
+
 
 @app.route('/getMembers', methods=['POST'])
 def getMembers():
@@ -263,7 +295,7 @@ def getMembers():
     content = request.json
     idcal = content['idCal']
 
-    mycur.execute("""SELECT login FROM utilisateur WHERE uniqueID IN (SELECT idUtilisateur FROM utilisateurCalendrier WHERE idCalendrier = :idCal) ORDER BY login ASC""",idCal = idcal)
+    mycur.execute("""SELECT * FROM utilisateur WHERE uniqueID IN (SELECT idUtilisateur FROM utilisateurCalendrier WHERE idCalendrier = :idCal) ORDER BY login ASC""",idCal = idcal)
 
     myresult = mycur.fetchall()
     texteResultat = {}
@@ -329,7 +361,7 @@ def generateToken():
 def verifToken():
     global connexion
 
-    conn = connexion
+    conn = cx_Oracle.connect(connexion)
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -388,7 +420,7 @@ def addCalendar():
     mycursor.execute("""INSERT INTO calendrier (nomcalendrier,idadministrateur,description,couleurtheme) VALUES (:nomcalendrier,:idadministrateur,:description,:couleurtheme) """, nomcalendrier = nom_calendrier, idadministrateur = uniqueID, description = description, couleurtheme = couleurtheme)
     conn.commit()
     conn.close()
-    return "succes"
+    return {"result" : "succes"}
 
 @app.route('/getProfilCalendar', methods= ['POST'])
 def getProfilCalendar():
@@ -718,3 +750,51 @@ def createPayement():
 
 
     return "test okey"
+
+
+@app.route('/isAdmin', methods = ['POST'])
+def isAdmin():
+    global connexion
+    conn = cx_Oracle.connect(connexion)
+    mycur = conn.cursor()
+
+    content = request.json
+    
+    uniqueID = content['login']
+    idCal = content['idCal']
+
+    mycur.execute("""SELECT idadministrateur FROM calendrier WHERE idcalendrier = :idCal AND idadministrateur = :uniqueID""", idCal = idCal, uniqueID = uniqueID)
+    myresult = mycur.fetchall()
+    if len(myresult) == 1:
+        return {'result' : 1}
+    else:
+        return {'result' : 0}
+
+
+@app.route('/changeDroits', methods = ['POST'])
+def changeDroits():
+    global connexion
+    conn = cx_Oracle.connect(connexion)
+    mycur = conn.cursor()
+
+    content = request.json
+
+    membres = content['membres']
+    idCal = content['idCal']
+
+    for i in membres:
+        print(membres[i])
+        if membres[i]:
+            mycur.execute("""SELECT uniqueID FROM utilisateur WHERE login = :membre""", membre = i)
+            id = mycur.fetchone()
+            id = id[0]
+            mycur.execute("""UPDATE utilisateurcalendrier SET droits = 'w' WHERE idcalendrier = :idCal AND idutilisateur = :membre""", idCal = idCal, membre = id)
+        else:
+            mycur.execute("""SELECT uniqueID FROM utilisateur WHERE login = :membre""", membre = i)
+            id = mycur.fetchone()
+            id = id[0]
+            mycur.execute("""UPDATE utilisateurcalendrier SET droits = 'r' WHERE idcalendrier = :idCal AND idutilisateur = :membre""", idCal = idCal, membre = id)
+        
+    conn.commit()
+    conn.close()
+    return {'result':'added'}
