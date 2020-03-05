@@ -697,56 +697,43 @@ def createPayement():
     content = request.json
     
     participants = content['participants']
-    montant_total = content['montant_total']
     montant_paye = content['montant_paye']
+    montant_total = sum(montant_paye)
     print("participants  --> ",participants)
     print("montant paye --> ",montant_paye)
     print("montant total --> ", montant_total)
-    total = 0
-    #donne cout total
-    for a in range(len(participants)):
-        print(participants[a] , " a paye " , montant_paye[a] , " sur " , montant_total)
-        total += int(montant_paye[a])
-    cout_par_personne = total/len(participants)
-    tab_cout = []
-    for a in range(len(participants)):
-        tab_cout.append(cout_par_personne - int(montant_paye[a]))
-    dico = {}
-    for a in range(len(participants)):
-        #cle = nom_participant : val_attribue 
-        dico[participants[a]] = tab_cout[a]    
-    print("dico --> ",dico)
-    dico = sorted(dico.items(), key=lambda t: t[1])
-    print("dico trie --> ", dico )
-    for a in range(len(dico)):
-        print("dico --> ", dico[a])
-        print(dico[a][0] , " est a  --> " , dico[a][1])
-    #affecter plus petit a plus grand dans le dico 
-    #tant que toutes les valeurs ne sont pas 0 on réitère
-    #on affecte le plus possible pour arriver a 0
-    #une fois arrivé à 0 on swap sur celui d'après
+    montant_a_paye_pers = montant_total/len(participants)
+    print("montant que chaque personne doit payer",montant_a_paye_pers)
 
 
-    for a in range(len(dico)):
-        reducteur = 1
-        while dico[a][1] != 0.0 :
-            print(reducteur)
-            # print("le plus endette : ", dico[a])
-            # print("le moins endette : ", dico[len(dico)-a-1])
-            if dico[len(dico)-reducteur][1] == 0 :
-                reducteur += 1
-            else :
-                if dico[a][1] < dico[len(dico)-reducteur][1] :
-                    print("droite plus grand que gauche")
-                    # print(dico[a][1], " : ", dico[len(dico)-reducteur][1])
-                    # dico[len(dico)-reducteur][1]
-                    dico[a][1] = dico[a][1] + dico[len(dico)-reducteur][1]
-                    reducteur += 1
-                else : 
-                    dico[len(dico)-reducteur][1] += dico[a][1]
-                    print("gauche plus grand que droite")
-                    reducteur += 1
+    dico = []
+    # donne cout total
+    for a in range(len(participants)):
+        liste = []
+        dico.append(liste)
+        dico[a].append(montant_paye[a]-montant_a_paye_pers)
+        dico[a].append(participants[a])
+    print("dico ---> ", dico)
+    dico.sort()
+    print("dico trie ---> ", dico)
 
+
+    plus_petit = dico[0][0]
+    print("plus_petit",plus_petit)
+    plus_grand = dico[len(dico)-1][0]
+    print("plus_grand",plus_grand)
+    print()
+
+    while dico[0][0] != 0 and dico[len(dico)-1][0]!=0 :
+        dico[0][0] = dico[0][0] + dico[len(dico)-1][0]
+        print(dico[len(dico)-1][1] , " recevra " , dico[len(dico)-1][0], " de ", dico[0][1])
+        dico[len(dico)-1][0] = dico[len(dico)-1][0] - dico[len(dico)-1][0]
+        # print("dico apres echange boucle",dico)    
+        dico.sort()
+        print("dico apres tri",dico)
+        print()
+
+    print("dico apres echange",dico)
 
 
     return "test okey"
