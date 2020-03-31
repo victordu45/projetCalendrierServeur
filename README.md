@@ -17,6 +17,7 @@ pip install Flask
 
 # [IMPORTANT] Installer deux packages pour faire fonctionner le projet : 
 pip install -U flask-cors
+
 pip install cx_oracle
 
 # Voilà flask est installé, réalisons un petit script désormais
