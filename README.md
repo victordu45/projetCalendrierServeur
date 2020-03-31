@@ -36,4 +36,4 @@ python -m flask run
 
 OU
 
-python -m flask run -h [ADRESSE IP] -b [PORT]
+python -m flask run -h [ADRESSE IP] -p [PORT]
