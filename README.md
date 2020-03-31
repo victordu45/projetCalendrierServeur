@@ -15,6 +15,10 @@ venv\Scripts\activate
 # Installation de flask
 pip install Flask
 
+# [IMPORTANT] Installer deux packages pour faire fonctionner le projet : 
+pip install -U flask-cors
+pip install cx_oracle
+
 # Voilà flask est installé, réalisons un petit script désormais
 # Le fameux hello world dans un fichier nommé hello.py
 from flask import Flask
