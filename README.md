@@ -33,3 +33,7 @@ def hello_world():
 set FLASK_APP=hello.py
 # On peut alors lancer le serveur
 python -m flask run
+
+OU
+
+python -m flask run -h [ADRESSE IP] -b [PORT]
