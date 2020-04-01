@@ -7,14 +7,14 @@ from datetime import date
 from datetime import datetime, timedelta
 import time
 
-connexion = 'baussenac/azerty@192.168.0.145:1521/xe'
+connexion = " "
 
 @app.route('/login' , methods=['POST'])
 def conn_bdd():
     global connexion
 
     # conn = cx_Oracle.connect(bd,"azerty",ip)
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -29,6 +29,7 @@ def conn_bdd():
 
     #Exécution de la requête sql
     myresult = mycursor.fetchone()
+    print(myresult)
     uniqueID = myresult[0]
     
     #Si la longueur du resultat est égale a 1 alors le login et le mot de passe correspondent
@@ -42,7 +43,7 @@ def conn_bdd():
 @app.route('/register', methods = ['POST'])
 def testBD():
     global connexion
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -68,21 +69,18 @@ def testBD():
     myresult = mycursor.fetchall()
 
     if(len(myresult) != 0):
-        login = 'Erreur'
-        a = 1
-    else:
-        login = ''
+        return {"result" : "Login déjà utilisé"}
     #Creation cursor
-    mycursor.execute("""SELECT * FROM Utilisateur WHERE email = :mail""", mail = mail)
+    # mycursor.execute("""SELECT * FROM Utilisateur WHERE email = :mail""", mail = mail)
 
     #Exécution de la requête sql
-    myresult = mycursor.fetchall()
-
-    if(len(myresult) != 0):
-        mail = 'Erreur'
-        a = 1
-    else:
-        login = ''
+    # myresult = mycursor.fetchall()
+    a = 0
+    # if(len(myresult) != 0):
+    #     mail = 'Erreur'
+    #     a = 1
+    # else:
+    #     login = ''
 
     date_actuelle = date.today()
     #Si a est égale a 1 aucun user ne possede le login ou adresse mail rentré 
@@ -97,7 +95,7 @@ def testBD():
         mycursor.execute("""INSERT INTO utilisateurCalendrier (idCalendrier, idUtilisateur, dateAjoutInvite, idUtilisateurCalendrier, droits) VALUES (:idCalendrier, :uniqueID, sysdate, ug_idutilisateurcalendrier_seq.nextval, 'w')""", idCalendrier=idCalendrier, uniqueID=uniqueID)
         mycursor.execute("""UPDATE calendrier SET couleurTheme = :color WHERE idadministrateur = :uniqueID""", uniqueID=uniqueID, color=color)
 
-        texteResultat = "added"
+        # texteResultat = "added"
         conn.commit()
         conn.close()
         return {"result" : "added", "Login" : login, 'Mail' : mail}
@@ -105,12 +103,12 @@ def testBD():
         #Sinon on renvoit un message d'erreur
         conn.close()
         return {"Login" : login, "Mail" : mail}
-        ++b  
+         
 
 @app.route('/addNewEvent', methods= ['POST'])
 def addNewEvent():
     global connexion
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -154,7 +152,7 @@ def getEventsFromPersonalCalendar():
     global connexion
 
     # conn = cx_Oracle.connect(bd,"azerty",ip)
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -191,7 +189,7 @@ def getEventsFromPersonalCalendar():
 @app.route('/getPersonalCalendar', methods= ['POST'])
 def getPersonalCalendar():
     global connexion
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -225,7 +223,7 @@ def getPersonalCalendar():
 @app.route('/getSharedCalendars', methods= ['POST'])
 def getSharedCalendar():
     global connexion
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycur = conn.cursor()
 
     #Création du JSON
@@ -268,7 +266,7 @@ AND UtilisateurCalendrierInvite.idUtilisateur != c.idAdministrateur AND Utilisat
 @app.route('/getMembersWritable', methods=['POST'])
 def getMembersWritable():
     global connexion
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycur = conn.cursor()
 
     content = request.json
@@ -289,7 +287,7 @@ def getMembersWritable():
 @app.route('/getMembers', methods=['POST'])
 def getMembers():
     global connexion
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycur = conn.cursor()
 
     content = request.json
@@ -316,7 +314,7 @@ def getMembers():
 @app.route('/getInfos', methods=['POST'])
 def getInfos():
     global connexion
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycur = conn.cursor()
 
     content = request.json
@@ -361,7 +359,7 @@ def generateToken():
 def verifToken():
     global connexion
 
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -400,7 +398,7 @@ def addCalendar():
     global connexion
     #unique id
     #id calendar
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycursor = conn.cursor()
 
     #Création du JSON
@@ -425,7 +423,7 @@ def addCalendar():
 @app.route('/getProfilCalendar', methods= ['POST'])
 def getProfilCalendar():
     global connexion
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycursor = conn.cursor()
 
     content = request.json
@@ -439,7 +437,7 @@ def getProfilCalendar():
 @app.route('/getProfil', methods= ['POST'])
 def getProfil():
     global connexion
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycursor = conn.cursor()
 
     content = request.json
@@ -506,7 +504,7 @@ def getProfil():
 def suppEvent():
     global connexion
 
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycursor = conn.cursor()
     # Création du JSON
     content = request.json
@@ -536,7 +534,7 @@ def suppEvent():
 def modifEvent():
     global connexion
 
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycursor = conn.cursor()
     # Création du JSON
     content = request.json
@@ -569,7 +567,7 @@ def modifEvent():
 @app.route('/getMessages',methods=['POST'])
 def getMessages():
     global connexion
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycursor = conn.cursor()
     # Création du JSON
     content = request.json
@@ -633,7 +631,7 @@ def getMessages():
 @app.route('/createMessage', methods= ['POST'])
 def createMessage():
     global connexion
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycursor = conn.cursor()
     # Création du JSON
     content = request.json
@@ -655,7 +653,7 @@ def createMessage():
 @app.route('/getUsersFromCalendar', methods= ['POST'])
 def getUsersFromCalendar():
     global connexion
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycursor = conn.cursor()
     # Création du JSON
     content = request.json
@@ -742,7 +740,7 @@ def createPayement():
 @app.route('/isAdmin', methods = ['POST'])
 def isAdmin():
     global connexion
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycur = conn.cursor()
 
     content = request.json
@@ -761,7 +759,7 @@ def isAdmin():
 @app.route('/changeDroits', methods = ['POST'])
 def changeDroits():
     global connexion
-    conn = cx_Oracle.connect(connexion)
+    conn = cx_Oracle.connect('ora8trd157_22','K+E4+7NLeXWE',cx_Oracle.makedsn('dim-oracle.uqac.ca',1521,'dimdb'))
     mycur = conn.cursor()
 
     content = request.json
