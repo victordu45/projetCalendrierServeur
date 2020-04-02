@@ -84,7 +84,7 @@ def testBD():
 
     date_actuelle = date.today()
     #Si a est égale a 1 aucun user ne possede le login ou adresse mail rentré 
-    if(a != 1):
+    if(len(login) > 0):
        #On peut alors créer le nouveau user avec son mot de passe, son nom, son prénom et son login
         mycursor.execute("""INSERT INTO Utilisateur VALUES (:uniqueID, :login, :password, :mail, '0623605498','125' ,:date_actuelle ,:surname, :name)""",uniqueID=uniqueID,login=login,password=password, mail=mail,date_actuelle=date_actuelle,surname=surname, name=name)
 
@@ -102,7 +102,7 @@ def testBD():
     else:
         #Sinon on renvoit un message d'erreur
         conn.close()
-        return {"Login" : login, "Mail" : mail}
+        return {"erreur" : "Le login ne peut pas être vide"}
          
 
 @app.route('/addNewEvent', methods= ['POST'])
