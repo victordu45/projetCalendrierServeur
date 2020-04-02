@@ -20,6 +20,17 @@ pip install -U flask-cors
 
 pip install cx_oracle
 
+# Installer un client oracle pour faire fonctionner le package cx_Oracle
+
+https://www.oracle.com/fr/database/technologies/instant-client/downloads.html
+
+Copier le dossier à la racine ou python est installé sur l'ordinateur
+
+# Ajouter une variable d'environnement pour que le client oracle soit reconnu 
+
+Ajouter à la suite de la variable d'environnement PATH : %PYTHON_HOME%\ [LE NOM DU DOSSIER DU CLIENT ORACLE]
+
+
 # Voilà flask est installé, réalisons un petit script désormais
 # Le fameux hello world dans un fichier nommé hello.py
 from flask import Flask
