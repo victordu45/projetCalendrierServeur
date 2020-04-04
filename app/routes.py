@@ -175,7 +175,7 @@ def getEventsFromPersonalCalendar():
     uniqueID = content['uniqueID']
     idCalendar = content['idCalendar']
     print(idCalendar)
-    mycursor.execute("""SELECT e.nomEvenement, c.couleurTheme,to_char(e.dateDebut,'YYYY-MM-DD HH24:MI'),to_char(e.dateFin, 'YYYY-MM-DD HH24:MI'), e.description FROM evenement e, calendrierevenement ce, calendrier c WHERE
+    mycursor.execute("""SELECT e.nomEvenement, c.couleurTheme,to_char(e.dateDebut,'YYYY-MM-DD HH24:MI'),to_char(e.dateFin, 'YYYY-MM-DD HH24:MI'), e.description,e.idEvenement FROM evenement e, calendrierevenement ce, calendrier c WHERE
     e.idEvenement = ce.idEvenement AND ce.idCalendrier = c.idCalendrier AND ce.idCalendrier = :idCalendrier """, idCalendrier=idCalendar)
     myresult = mycursor.fetchall()
     compteurIdJson = 0
@@ -188,7 +188,8 @@ def getEventsFromPersonalCalendar():
                 "couleurTheme": i[1],
                 "dateDebut": i[2],
                 "dateFin": i[3],
-                # "description" : i[4].read()
+                "description" : i[4].read(),
+                "idEvenement" : i[5]
             }
             texteResultat[str(compteurIdJson)] = json
             compteurIdJson += 1
@@ -215,7 +216,7 @@ def getEventsFromDay():
     aDate = content['aDay']
 
     print(idCalendar)
-    mycursor.execute("""SELECT e.nomEvenement, c.couleurTheme,to_char(e.dateDebut,'YYYY-MM-DD HH24:MI') as dtDebut,to_char(e.dateFin, 'YYYY-MM-DD HH24:MI'), e.description,e.dateDebut FROM evenement e, calendrierevenement ce, calendrier c WHERE 
+    mycursor.execute("""SELECT e.nomEvenement, c.couleurTheme,to_char(e.dateDebut,'YYYY-MM-DD HH24:MI') as dtDebut,to_char(e.dateFin, 'YYYY-MM-DD HH24:MI'), e.description,e.dateDebut,e.idEvenement FROM evenement e, calendrierevenement ce, calendrier c WHERE 
     e.idEvenement = ce.idEvenement AND ce.idCalendrier = c.idCalendrier AND ce.idCalendrier = :idCalendrier AND to_char(e.dateDebut,'YYYY-MM-DD') = to_char(to_date(:aDate,'YYYY-MM-DD'),'YYYY-MM-DD')""", idCalendrier=idCalendar, aDate=aDate)
     myresult = mycursor.fetchall()
     compteurIdJson = 0
@@ -228,7 +229,8 @@ def getEventsFromDay():
                 "couleurTheme": i[1],
                 "dateDebut": i[2],
                 "dateFin": i[3],
-                # "description" : i[4].read()
+                "description" : i[4].read(),
+                "idEvenement" : i[6]
             }
             texteResultat[str(compteurIdJson)] = json
             compteurIdJson += 1
