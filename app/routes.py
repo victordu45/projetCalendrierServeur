@@ -177,7 +177,7 @@ def getEventsFromPersonalCalendar():
     idCalendar = content['idCalendar']
     print(idCalendar)
     mycursor.execute("""SELECT e.nomEvenement, c.couleurTheme,to_char(e.dateDebut,'YYYY-MM-DD HH24:MI'),to_char(e.dateFin, 'YYYY-MM-DD HH24:MI'), e.description,e.idEvenement FROM evenement e, calendrierevenement ce, calendrier c WHERE
-    e.idEvenement = ce.idEvenement AND ce.idCalendrier = c.idCalendrier AND ce.idCalendrier = :idCalendrier """, idCalendrier=idCalendar)
+    e.idEvenement = ce.idEvenement AND ce.idCalendrier = c.idCalendrier AND ce.idCalendrier = :idCalendrier ORDER BY e.dateDebut """, idCalendrier=idCalendar)
     myresult = mycursor.fetchall()
     compteurIdJson = 0
     texteResultat = {}
@@ -218,7 +218,7 @@ def getEventsFromDay():
 
     print(idCalendar)
     mycursor.execute("""SELECT e.nomEvenement, c.couleurTheme,to_char(e.dateDebut,'YYYY-MM-DD HH24:MI') as dtDebut,to_char(e.dateFin, 'YYYY-MM-DD HH24:MI'), e.description,e.dateDebut,e.idEvenement FROM evenement e, calendrierevenement ce, calendrier c WHERE 
-    e.idEvenement = ce.idEvenement AND ce.idCalendrier = c.idCalendrier AND ce.idCalendrier = :idCalendrier AND to_char(e.dateDebut,'YYYY-MM-DD') = to_char(to_date(:aDate,'YYYY-MM-DD'),'YYYY-MM-DD')""", idCalendrier=idCalendar, aDate=aDate)
+    e.idEvenement = ce.idEvenement AND ce.idCalendrier = c.idCalendrier AND ce.idCalendrier = :idCalendrier AND to_char(e.dateDebut,'YYYY-MM-DD') = to_char(to_date(:aDate,'YYYY-MM-DD'),'YYYY-MM-DD') ORDER BY e.dateDebut """, idCalendrier=idCalendar, aDate=aDate)
     myresult = mycursor.fetchall()
     compteurIdJson = 0
     texteResultat = {}
