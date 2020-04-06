@@ -136,28 +136,29 @@ def addNewEvent():
 
     dateDebutConcatene = dateDebut + " " + heureDebut
     date_debut = datetime.strptime(dateDebutConcatene, '%Y-%m-%d %H:%M')
-    print(date_debut)
     dateFinConcatene = dateFin + " " + heureFin
     date_fin = datetime.strptime(dateFinConcatene, '%Y-%m-%d %H:%M')
     # print(dateDebutConcatene + "  " + dateFinConcatene)
 
     dateNow = datetime.now()
     dateNow = dateNow.strftime("%d%m%Y%H%M%S-%f")
-    idEvenement = nom.upper()+'-' + dateNow
-    print("type idCal -->", idEvenement)
-    print("date_debut -->", date_debut)
-    print("nom -->", nom)
-    print("description -->", description)
-    print("date_fin -->", date_fin)
+    nomId = nom
+    nomId = nomId.replace(" ", "_")[:28] +'-' + dateNow
+    print(nomId, len(nomId))
+    idEvenement = nomId.upper()
 
-    mycursor.execute("""INSERT INTO evenement (idEvenement,datedebut,nomevenement,description,datefin) VALUES (:idEvenement,:dateDebut,:nomEvenement,:description,:dateFin) """,
-                     idEvenement=idEvenement, dateDebut=date_debut, nomEvenement=nom, description=description, dateFin=date_fin)
-    mycursor.execute("""INSERT INTO calendrierEvenement (idcalendrier,idevenement) VALUES (:idCalendrier,:idEvenement) """,
-                     idCalendrier=idCalendar, idEvenement=idEvenement)
+    try: 
+
+        mycursor.execute("""INSERT INTO evenement (idEvenement,datedebut,nomevenement,description,datefin) VALUES (:idEvenement,:dateDebut,:nomEvenement,:description,:dateFin) """,
+                        idEvenement=idEvenement, dateDebut=date_debut, nomEvenement=nom, description=description, dateFin=date_fin)
+        mycursor.execute("""INSERT INTO calendrierEvenement (idcalendrier,idevenement) VALUES (:idCalendrier,:idEvenement) """,
+                        idCalendrier=idCalendar, idEvenement=idEvenement)
+    except cx_Oracle.Error as e:
+        return {"result" : str(e)}
 
     conn.commit()
     conn.close()
-    return "added"
+    return {"result" : "added"}
 
 
 @app.route('/getEventsFromPersonalCalendar', methods=['POST'])
@@ -188,7 +189,7 @@ def getEventsFromPersonalCalendar():
                 "couleurTheme": i[1],
                 "dateDebut": i[2],
                 "dateFin": i[3],
-                "description" : i[4].read(),
+                # "description" : i[4].read(),
                 "idEvenement" : i[5]
             }
             texteResultat[str(compteurIdJson)] = json
@@ -229,7 +230,7 @@ def getEventsFromDay():
                 "couleurTheme": i[1],
                 "dateDebut": i[2],
                 "dateFin": i[3],
-                "description" : i[4].read(),
+                # "description" : i[4].read(),
                 "idEvenement" : i[6]
             }
             texteResultat[str(compteurIdJson)] = json
