@@ -16,9 +16,18 @@ def getMessages():
     content = request.json
     # Récupération des données du JSON envoyé
     idCalendrier = content['idCalendrier']
-    offsetRecu = content['offset']
-    # offsetMax = 20
+    offset = content['offset']
+    # offset est la "page" de message qu'on va envoyer, ex: 1 = les premiers 15messages, 2, les 15messages suivants, etc..
 
+    mycursor.execute("""SELECT count(idmessage)
+    FROM message
+    WHERE idcalendrier = :idCal
+    """, idCal=idCalendrier)
+
+    (nbr_message_total,) = mycursor.fetchone()
+    
+    pointeur_message = nbr_message_total - offset
+    
     mycursor.execute("""    
         SELECT * 
         FROM(
@@ -27,39 +36,33 @@ def getMessages():
                 from message m, calendrier c,utilisateur u
                 WHERE c.idcalendrier = m.idcalendrier 
                 AND u.uniqueID = m.idproprietaire 
-                AND m.IDCALENDRIER = :idCalendrier
+                AND m.IDCALENDRIER = :idCalendrierQuery
                 order by datemessage
                 )
             )
-        WHERE r >= 5 
-        AND ROWNUM < 15;
-    """)
+        WHERE r >= :offsetQuery 
+        AND ROWNUM <= 15
+    """, idCalendrierQuery=idCalendrier,offsetQuery=pointeur_message+1)
 
     myresult = mycursor.fetchall()
     # print("myresult" , myresult)
     compteurIdJson = 0
-    texteResultat = {}
+    texteResultat = []
     # print("len myresult" , len(myresult))
     if(len(myresult) > 0):
         for i in myresult:
-            # print("type du contenu -->",type(i[1]))
-            # print(bytes(i[1].read()).decode("utf-8"))
-            if uniqueID == i[4]:
-                id = uniqueID
-            else:
-                id = i[4]
-            json = {
+            jsonM = {
                 "idmessage": i[0],
-                "contenu": bytes(i[1].read()).decode("utf-8"),
-                "datemessage": i[2],
+                "message": bytes(i[1].read()).decode("utf-8"),
+                "createdAt": i[2],
                 "color": i[3],
                 "offset": offset,
-                "idUtilisateur": id,
-                "login": i[5]
+                "idUtilisateur": i[4],
+                "user": i[5]
             }
-            texteResultat[str(compteurIdJson)] = json
+            texteResultat.append(jsonM)
             compteurIdJson += 1
     else:
-        texteResultat = {"messages": "il n'y a pas plus de messages dans le groupe !"}
+        texteResultat = ["il n'y a pas de message"]
     conn.close()
-    return texteResultat
+    return json.dumps(texteResultat)
