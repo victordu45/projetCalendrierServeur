@@ -756,3 +756,9 @@ def changeDroits():
     conn.commit()
     conn.close()
     return {'result': 'added'}
+
+
+@app.route("/newTransaction", method=["POST"])
+def newTransaction():
+    conn = connectionBD()
+    conn.close()
