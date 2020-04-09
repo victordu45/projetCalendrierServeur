@@ -758,7 +758,55 @@ def changeDroits():
     return {'result': 'added'}
 
 
-@app.route("/newTransaction", method=["POST"])
+@app.route("/newTransaction", methods=["POST"])
 def newTransaction():
-    conn = connectionBD()
+    conn = ConnectionBD()
+
+    content = request.json
+    cursorTransaction = conn.cursor()
+
+    idUtilisateur = content["idUtilisateur"]
+    montant = content["montant"]
+    idEvt = content["idEvenement"]
+    currency = content["currency"]
+    description = content["description"]
+
+    #array listant les participants pour les ajouts dans la table des participants
+    participants = content["allMembers"]
+
+    #création idTransaction
+    dateNow = datetime.now()
+    dateNow = dateNow.strftime("%d%m%Y%H%M%S-%f")
+
+    idTransaction = "TRANSAT-"+ idEvt[:5] + "-" + str(montant) + "-" + dateNow
+    
+    #ajouter la dépense dans la table de transactions
+    cursorTransaction.execute("""
+        INSERT INTO TRANSACTION (idTransaction, idUtilisateur, montant, idevenement, currency, description)
+        VALUES (:pIdTransaction, :pIdUtilisateur, :pMontant, :pIdEvt, :pCurrency, :pDescription)
+        """,
+        pIdTransaction=idTransaction, pIdUtilisateur = idUtilisateur, pMontant = montant, pIdEvt = idEvt, pCurrency = currency, pDescription =description)
+
+    #ajouter dans le suivi des transactions la dépense
+    cursorTransaction.execute("""
+        INSERT INTO SUIVITRANSACTION (idtransaction,etat,montant,idutilisateur)
+        VALUES (:pIdTransaction, 'ADD', :pMontant, :pUtilisateur)""",
+        pIdTransaction=idTransaction , pMontant = montant, pUtilisateur = idUtilisateur )
+
+    #conversion json en array
+    data=[]
+    for i in participants:
+        print(i)
+        print(i["name"])
+        data.append(
+            (i["name"],idTransaction,i["amount"])
+        )
+    
+    print(data)
+    cursorTransaction.executemany("""
+        insert into PARTICIPANTSTRANSACTION (loginParticipant,IDTRANSACTION,MONTANT)
+        values (:1, :2, :3)""", data)
+
+    conn.commit()
     conn.close()
+    return {"result": "added"}
