@@ -15,6 +15,7 @@ def ConnectionBD():
     return cx_Oracle.connect('ora8trd157_22', 'K+E4+7NLeXWE',
                              cx_Oracle.makedsn('dim-oracle.uqac.ca', 1521, 'dimdb'))
 
+
 @app.route('/login', methods=['POST'])
 def conn_bdd():
     global connexion
@@ -145,22 +146,22 @@ def addNewEvent():
     dateNow = datetime.now()
     dateNow = dateNow.strftime("%d%m%Y%H%M%S-%f")
     nomId = nom
-    nomId = nomId.replace(" ", "_")[:28] +'-' + dateNow
+    nomId = nomId.replace(" ", "_")[:28] + '-' + dateNow
     print(nomId, len(nomId))
     idEvenement = nomId.upper()
 
-    try: 
+    try:
 
         mycursor.execute("""INSERT INTO evenement (idEvenement,datedebut,nomevenement,description,datefin) VALUES (:idEvenement,:dateDebut,:nomEvenement,:description,:dateFin) """,
-                        idEvenement=idEvenement, dateDebut=date_debut, nomEvenement=nom, description=description, dateFin=date_fin)
+                         idEvenement=idEvenement, dateDebut=date_debut, nomEvenement=nom, description=description, dateFin=date_fin)
         mycursor.execute("""INSERT INTO calendrierEvenement (idcalendrier,idevenement) VALUES (:idCalendrier,:idEvenement) """,
-                        idCalendrier=idCalendar, idEvenement=idEvenement)
+                         idCalendrier=idCalendar, idEvenement=idEvenement)
     except cx_Oracle.Error as e:
-        return {"result" : str(e)}
+        return {"result": str(e)}
 
     conn.commit()
     conn.close()
-    return {"result" : "added"}
+    return {"result": "added"}
 
 
 @app.route('/getEventsFromPersonalCalendar', methods=['POST'])
@@ -191,7 +192,7 @@ def getEventsFromPersonalCalendar():
                 "dateDebut": i[2],
                 "dateFin": i[3],
                 # "description" : i[4].read(),
-                "idEvenement" : i[5]
+                "idEvenement": i[5]
             }
             texteResultat[str(compteurIdJson)] = json
             compteurIdJson += 1
@@ -231,7 +232,7 @@ def getEventsFromDay():
                 "dateDebut": i[2],
                 "dateFin": i[3],
                 # "description" : i[4].read(),
-                "idEvenement" : i[6]
+                "idEvenement": i[6]
             }
             texteResultat[str(compteurIdJson)] = json
             compteurIdJson += 1
@@ -628,8 +629,6 @@ def modifEvent():
     return {"result": texteResultat}
 
 
-
-
 @app.route('/getUsersFromCalendar', methods=['POST'])
 def getUsersFromCalendar():
     global connexion
@@ -660,6 +659,7 @@ AND c.idcalendrier = :id """, id=uniqueID)
         texteResultat = {"vide": "vide"}
     conn.close()
     return texteResultat
+
 
 @app.route('/createPayement', methods=['POST'])
 def createPayement():
@@ -771,37 +771,37 @@ def newTransaction():
     currency = content["currency"]
     description = content["description"]
 
-    #array listant les participants pour les ajouts dans la table des participants
+    # array listant les participants pour les ajouts dans la table des participants
     participants = content["allMembers"]
 
-    #création idTransaction
+    # création idTransaction
     dateNow = datetime.now()
     dateNow = dateNow.strftime("%d%m%Y%H%M%S-%f")
 
-    idTransaction = "TRANSAT-"+ idEvt[:5] + "-" + str(montant) + "-" + dateNow
-    
-    #ajouter la dépense dans la table de transactions
+    idTransaction = "TRANSAT-" + idEvt[:5] + "-" + str(montant) + "-" + dateNow
+
+    # ajouter la dépense dans la table de transactions
     cursorTransaction.execute("""
         INSERT INTO TRANSACTION (idTransaction, idUtilisateur, montant, idevenement, currency, description)
         VALUES (:pIdTransaction, :pIdUtilisateur, :pMontant, :pIdEvt, :pCurrency, :pDescription)
         """,
-        pIdTransaction=idTransaction, pIdUtilisateur = idUtilisateur, pMontant = montant, pIdEvt = idEvt, pCurrency = currency, pDescription =description)
+                              pIdTransaction=idTransaction, pIdUtilisateur=idUtilisateur, pMontant=montant, pIdEvt=idEvt, pCurrency=currency, pDescription=description)
 
-    #ajouter dans le suivi des transactions la dépense
+    # ajouter dans le suivi des transactions la dépense
     cursorTransaction.execute("""
         INSERT INTO SUIVITRANSACTION (idtransaction,etat,montant,idutilisateur)
         VALUES (:pIdTransaction, 'ADD', :pMontant, :pUtilisateur)""",
-        pIdTransaction=idTransaction , pMontant = montant, pUtilisateur = idUtilisateur )
+                              pIdTransaction=idTransaction, pMontant=montant, pUtilisateur=idUtilisateur)
 
-    #conversion json en array
-    data=[]
+    # conversion json en array
+    data = []
     for i in participants:
         print(i)
         print(i["name"])
         data.append(
-            (i["name"],idTransaction,i["amount"])
+            (i["name"], idTransaction, i["amount"])
         )
-    
+
     print(data)
     cursorTransaction.executemany("""
         insert into PARTICIPANTSTRANSACTION (loginParticipant,IDTRANSACTION,MONTANT)
@@ -810,6 +810,7 @@ def newTransaction():
     conn.commit()
     conn.close()
     return {"result": "added"}
+
 
 @app.route("/getPersonalAmountTransaction", methods=["POST"])
 def getPersonalAmountTransaction():
@@ -820,7 +821,8 @@ def getPersonalAmountTransaction():
     idUtilisateur = content["uniqueID"]
     idCalendrier = content["idCalendar"]
     try:
-        cursor.execute(""" select login from utilisateur where uniqueID = :uniqueID """,uniqueID = idUtilisateur)
+        cursor.execute(
+            """ select login from utilisateur where uniqueID = :uniqueID """, uniqueID=idUtilisateur)
         login = cursor.fetchone()[0]
         cursor.execute(""" select sum(montantPerso.mtn) from 
             (select  pt.montant as mtn from 
@@ -831,12 +833,11 @@ def getPersonalAmountTransaction():
                     and e.idevenement = ce.idevenement 
                     and e.idevenement = t.idevenement 
                     and ce.idcalendrier = :idCalendrier 
-                    AND pt.loginparticipant=:login) montantPerso""",idCalendrier = idCalendrier, login = login)
-        amount = cursor.fetchone()[0]
+                    AND pt.loginparticipant=:login) montantPerso""", idCalendrier=idCalendrier, login=login)
     except cx_Oracle.Error as e:
-        return {"error" : str(e)}
+        return {"error": str(e)}
+    return {"amount": cursor.fetchone()[0]}
 
-    return {"amount" : str(amount)}
 
 @app.route("/getTotalAmountTransactionCalendar", methods=["POST"])
 def getTotalAmountTransactionCalendar():
@@ -854,9 +855,64 @@ def getTotalAmountTransactionCalendar():
                 and e.idevenement = ce.idevenement 
                 and e.idevenement = t.idevenement 
                 and ce.idcalendrier = :idCalendrier 
-                """,idCalendrier = idCalendrier)
+                """, idCalendrier=idCalendrier)
         amount = cursor.fetchone()[0]
     except cx_Oracle.Error as e:
-        return {"error" : str(e)}
+        return {"error": str(e)}
 
-    return {"amount" : str(amount)}
+    return {"amount": str(amount)}
+
+
+@app.route("/getTransactionsFromEvent", methods=["POST"])
+def getTransactionsFromEvent():
+    conn = ConnectionBD()
+
+    content = request.json
+    
+    cursor = conn.cursor()
+    idUtilisateur = content["uniqueID"]
+    idCalendrier = content["idCalendar"]
+    idEvent = content['idEvenement']
+    try:
+        cursor.execute(
+            """ select login from utilisateur where uniqueID = :uniqueID """, uniqueID=idUtilisateur)
+        login = cursor.fetchone()[0]
+        cursor.execute(""" select f1.montant,f1.description,f1.idtransaction,to_char(f1.datetransaction,'YYYY-MM-DD') as datetransaction, f1.montant_total as montant_total,f1.currency,f1.idutilisateur as idu,f2.login from 
+(select  pt.montant,t.description,t.idtransaction,t.datetransaction, t.montant as montant_total,t.currency,t.idutilisateur from 
+        transaction t, suivitransaction st, participantstransaction pt, evenement e, calendrierevenement ce 
+            WHERE t.idtransaction = st.idtransaction 
+                and t.idtransaction = pt.idtransaction 
+                AND pt.idtransaction = st.idtransaction 
+                and e.idevenement = ce.idevenement 
+                and e.idevenement = t.idevenement 
+                and ce.idcalendrier = :idCalendrier
+                AND pt.loginparticipant=:login
+                AND e.idevenement = :idEvent) 
+                f1, (select login,uniqueid from utilisateur ) f2 WHERE f1.idutilisateur = f2.uniqueID""", idCalendrier=idCalendrier, login=login, idEvent=idEvent)
+        myresult = cursor.fetchall()
+        
+        compteurIdJson = 0
+        texteResultat = {}
+        if(len(myresult) > 0):
+            for i in myresult:
+               
+                json = {
+                    "montant": i[0],
+                    "description": i[1],
+                    "idtransaction": i[2],
+                    "datetransaction": i[3],
+                    "montantTotal": i[4],
+                    "currency": i[5],
+                    "idutilisateur": i[6],
+                    "login": i[7],
+                }
+               
+                texteResultat[str(compteurIdJson)] = json
+                compteurIdJson += 1      
+           
+            return texteResultat
+        else:
+            texteResultat = {"vide": "vide"}
+    except cx_Oracle.Error as e:
+        return {"error": str(e)}
+    
