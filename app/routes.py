@@ -810,3 +810,53 @@ def newTransaction():
     conn.commit()
     conn.close()
     return {"result": "added"}
+
+@app.route("/getPersonalAmountTransaction", methods=["POST"])
+def getPersonalAmountTransaction():
+    conn = ConnectionBD()
+
+    content = request.json
+    cursor = conn.cursor()
+    idUtilisateur = content["uniqueID"]
+    idCalendrier = content["idCalendar"]
+    try:
+        cursor.execute(""" select login from utilisateur where uniqueID = :uniqueID """,uniqueID = idUtilisateur)
+        login = cursor.fetchone()[0]
+        cursor.execute(""" select sum(montantPerso.mtn) from 
+            (select  pt.montant as mtn from 
+            transaction t, suivitransaction st, participantstransaction pt, evenement e, calendrierevenement ce 
+                WHERE t.idtransaction = st.idtransaction 
+                    and t.idtransaction = pt.idtransaction 
+                    AND pt.idtransaction = st.idtransaction 
+                    and e.idevenement = ce.idevenement 
+                    and e.idevenement = t.idevenement 
+                    and ce.idcalendrier = :idCalendrier 
+                    AND pt.loginparticipant=:login) montantPerso""",idCalendrier = idCalendrier, login = login)
+        amount = cursor.fetchone()[0]
+    except cx_Oracle.Error as e:
+        return {"error" : str(e)}
+
+    return {"amount" : str(amount)}
+
+@app.route("/getTotalAmountTransactionCalendar", methods=["POST"])
+def getTotalAmountTransactionCalendar():
+    conn = ConnectionBD()
+
+    content = request.json
+    cursor = conn.cursor()
+    idCalendrier = content["idCalendar"]
+    try:
+        cursor.execute(""" select  sum(t.montant) as mtn2 from 
+        transaction t, suivitransaction st, participantstransaction pt, evenement e, calendrierevenement ce 
+            WHERE t.idtransaction = st.idtransaction 
+                and t.idtransaction = pt.idtransaction 
+                AND pt.idtransaction = st.idtransaction 
+                and e.idevenement = ce.idevenement 
+                and e.idevenement = t.idevenement 
+                and ce.idcalendrier = :idCalendrier 
+                """,idCalendrier = idCalendrier)
+        amount = cursor.fetchone()[0]
+    except cx_Oracle.Error as e:
+        return {"error" : str(e)}
+
+    return {"amount" : str(amount)}
