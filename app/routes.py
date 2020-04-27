@@ -574,6 +574,7 @@ def suppEvent():
     conn = ConnectionBD()
     # Création du JSON
     content = request.json
+    mycursor = conn.cursor()
     # Récupération des données du JSON envoyé
     idEvenement = content['idEvenement']
     print("idEvenement --> ", idEvenement)
@@ -602,6 +603,7 @@ def modifEvent():
 
     conn = ConnectionBD()
     conn = ConnectionBD()
+    mycursor = conn.cursor()
     content = request.json
     # Récupération des données du JSON envoyé
     idEvenement = content['idEvenement']
@@ -872,25 +874,29 @@ def getTransactionsFromEvent():
     cursor = conn.cursor()
     idUtilisateur = content["uniqueID"]
     idCalendrier = content["idCalendar"]
-    idEvent = content['idEvenement']
+    idEvent = content["idEvenement"]
     try:
         cursor.execute(
             """ select login from utilisateur where uniqueID = :uniqueID """, uniqueID=idUtilisateur)
         login = cursor.fetchone()[0]
-        cursor.execute(""" select f1.montant,f1.description,f1.idtransaction,to_char(f1.datetransaction,'YYYY-MM-DD') as datetransaction, f1.montant_total as montant_total,f1.currency,f1.idutilisateur as idu,f2.login from 
-(select  pt.montant,t.description,t.idtransaction,t.datetransaction, t.montant as montant_total,t.currency,t.idutilisateur from 
-        transaction t, suivitransaction st, participantstransaction pt, evenement e, calendrierevenement ce 
-            WHERE t.idtransaction = st.idtransaction 
-                and t.idtransaction = pt.idtransaction 
-                AND pt.idtransaction = st.idtransaction 
-                and e.idevenement = ce.idevenement 
-                and e.idevenement = t.idevenement 
-                and ce.idcalendrier = :idCalendrier
-                AND pt.loginparticipant=:login
-                AND e.idevenement = :idEvent) 
-                f1, (select login,uniqueid from utilisateur ) f2 WHERE f1.idutilisateur = f2.uniqueID""", idCalendrier=idCalendrier, login=login, idEvent=idEvent)
+        print("login : " , login)
+#         cursor.execute(""" select f1.montant,f1.description,f1.idtransaction,to_char(f1.datetransaction,'YYYY-MM-DD') as datetransaction, f1.montant_total as montant_total,f1.currency,f1.idutilisateur as idu,f2.login from 
+# (select  pt.montant,t.description,t.idtransaction,t.datetransaction, t.montant as montant_total,t.currency,t.idutilisateur from 
+#         transaction t, suivitransaction st, participantstransaction pt, evenement e, calendrierevenement ce 
+#             WHERE t.idtransaction = st.idtransaction 
+#                 and t.idtransaction = pt.idtransaction 
+#                 AND pt.idtransaction = st.idtransaction 
+#                 and e.idevenement = ce.idevenement 
+#                 and e.idevenement = t.idevenement 
+#                 and ce.idcalendrier = :idCalendrier
+#                 AND pt.loginparticipant=:login
+#                 AND e.idevenement = :idEvent) 
+#                 f1, (select login,uniqueid from utilisateur ) f2 WHERE f1.idutilisateur = f2.uniqueID""", idCalendrier=idCalendrier, login=login, idEvent=idEvent)
+        cursor.execute("""select f1.montant, f1.description, f1.idtransaction, to_char(f1.datetransaction,'YYYY-MM-DD') as datetransaction,f1.currency,f1.idutilisateur as idu, u.login FROM transaction f1, utilisateur u
+        WHERE u.uniqueID = f1.idutilisateur
+        AND  f1.idevenement = :idEvent """,idEvent = idEvent)
         myresult = cursor.fetchall()
-        
+        print(myresult)
         compteurIdJson = 0
         texteResultat = {}
         if(len(myresult) > 0):
@@ -901,15 +907,14 @@ def getTransactionsFromEvent():
                     "description": i[1],
                     "idtransaction": i[2],
                     "datetransaction": i[3],
-                    "montantTotal": i[4],
-                    "currency": i[5],
-                    "idutilisateur": i[6],
-                    "login": i[7],
+                    "currency": i[4],
+                    "idutilisateur": i[5],
+                    "login": i[6]
                 }
                
                 texteResultat[str(compteurIdJson)] = json
                 compteurIdJson += 1      
-           
+            print(texteResultat)
             return texteResultat
         else:
             texteResultat = {"vide": "vide"}
