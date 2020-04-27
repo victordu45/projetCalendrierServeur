@@ -782,34 +782,37 @@ def newTransaction():
 
     idTransaction = "TRANSAT-" + idEvt[:5] + "-" + str(montant) + "-" + dateNow
 
-    # ajouter la dépense dans la table de transactions
-    cursorTransaction.execute("""
-        INSERT INTO TRANSACTION (idTransaction, idUtilisateur, montant, idevenement, currency, description)
-        VALUES (:pIdTransaction, :pIdUtilisateur, :pMontant, :pIdEvt, :pCurrency, :pDescription)
-        """,
-                              pIdTransaction=idTransaction, pIdUtilisateur=idUtilisateur, pMontant=montant, pIdEvt=idEvt, pCurrency=currency, pDescription=description)
+    try:
+        # ajouter la dépense dans la table de transactions
+        cursorTransaction.execute("""
+            INSERT INTO TRANSACTION (idTransaction, idUtilisateur, montant, idevenement, currency, description)
+            VALUES (:pIdTransaction, :pIdUtilisateur, :pMontant, :pIdEvt, :pCurrency, :pDescription)
+            """,
+                                pIdTransaction=idTransaction, pIdUtilisateur=idUtilisateur, pMontant=montant, pIdEvt=idEvt, pCurrency=currency, pDescription=description)
 
-    # ajouter dans le suivi des transactions la dépense
-    cursorTransaction.execute("""
-        INSERT INTO SUIVITRANSACTION (idtransaction,etat,montant,idutilisateur)
-        VALUES (:pIdTransaction, 'ADD', :pMontant, :pUtilisateur)""",
-                              pIdTransaction=idTransaction, pMontant=montant, pUtilisateur=idUtilisateur)
+        # ajouter dans le suivi des transactions la dépense
+        cursorTransaction.execute("""
+            INSERT INTO SUIVITRANSACTION (idtransaction,etat,montant,idutilisateur)
+            VALUES (:pIdTransaction, 'ADD', :pMontant, :pUtilisateur)""",
+                                pIdTransaction=idTransaction, pMontant=montant, pUtilisateur=idUtilisateur)
 
-    # conversion json en array
-    data = []
-    for i in participants:
-        print(i)
-        print(i["name"])
-        data.append(
-            (i["name"], idTransaction, i["amount"])
-        )
+        # conversion json en array
+        data = []
+        for i in participants:
+            print(i)
+            print(i["name"])
+            data.append(
+                (i["name"], idTransaction, i["amount"])
+            )
 
-    print(data)
-    cursorTransaction.executemany("""
-        insert into PARTICIPANTSTRANSACTION (loginParticipant,IDTRANSACTION,MONTANT)
-        values (:1, :2, :3)""", data)
+        print(data)
+        cursorTransaction.executemany("""
+            insert into PARTICIPANTSTRANSACTION (loginParticipant,IDTRANSACTION,MONTANT)
+            values (:1, :2, :3)""", data)
 
-    conn.commit()
+        conn.commit()   
+    except (cx_Oracle.Error,UnicodeEncodeError) as e:
+        return {"error": str(e)}
     conn.close()
     return {"result": "added"}
 
@@ -915,9 +918,9 @@ def getTransactionsFromEvent():
                 texteResultat[str(compteurIdJson)] = json
                 compteurIdJson += 1      
             print(texteResultat)
-            return texteResultat
+            
         else:
             texteResultat = {"vide": "vide"}
     except cx_Oracle.Error as e:
         return {"error": str(e)}
-    
+    return texteResultat
