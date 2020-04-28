@@ -479,8 +479,15 @@ def addCalendar():
     print("description --> ", description)
     print("couleurtheme --> ", couleurtheme)
 
-    mycursor.execute("""INSERT INTO calendrier (nomcalendrier,idadministrateur,description,couleurtheme) VALUES (:nomcalendrier,:idadministrateur,:description,:couleurtheme) """,
-                     nomcalendrier=nom_calendrier, idadministrateur=uniqueID, description=description, couleurtheme=couleurtheme)
+    idCal = mycursor.var(cx_Oracle.STRING)
+
+    mycursor.execute("""INSERT INTO calendrier (nomcalendrier,idadministrateur,description,couleurtheme) VALUES (:nomcalendrier,:idadministrateur,:description,:couleurtheme) returning idCalendrier into :python_var""",
+                     nomcalendrier=nom_calendrier, idadministrateur=uniqueID, description=description, couleurtheme=couleurtheme, python_var=idCal)
+    
+
+    mycursor.execute("""INSERT INTO utilisateurCalendrier (idCalendrier, idUtilisateur, dateAjoutInvite, idUtilisateurCalendrier, droits) VALUES (:idCalendrier, :uniqueID, sysdate, ug_idutilisateurcalendrier_seq.nextval, 'w')""",
+                      idCalendrier=idCal.getvalue()[0], uniqueID=uniqueID)
+
     conn.commit()
     conn.close()
     return {"result": "succes"}
