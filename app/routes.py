@@ -331,7 +331,7 @@ def getMembersWritable():
 
     content = request.json
     idcal = content['idCal']
-
+    print(idcal)
     mycur.execute("""SELECT u.login, uc.droits FROM utilisateur u, utilisateurcalendrier uc WHERE u.uniqueid = uc.idutilisateur AND idcalendrier = :idCal""", idCal=idcal)
     myresult = mycur.fetchall()
     resultat = {}
@@ -855,6 +855,83 @@ def getPersonalAmountTransaction():
         return {"error": str(e)}
     return {"amount": cursor.fetchone()[0]}
 
+@app.route("/getTotalAmountTransactionInEvent",methods=["POST"])
+def getTotalAmountTransactionInEvent():
+    conn = ConnectionBD()
+
+    content = request.json
+    cursor = conn.cursor()
+    idUtilisateur = content["uniqueID"]
+    idEvenement = content["idEvenement"]
+    try:
+        cursor.execute(
+            """ select login from utilisateur where uniqueID = :uniqueID """, uniqueID=idUtilisateur)
+        login = cursor.fetchone()[0]
+        cursor.execute(""" select  sum(pt.montant) as mtn from 
+            transaction t,  participantstransaction pt, evenement e
+                WHERE 
+                    t.idtransaction = pt.idtransaction 
+                    and t.idevenement = e.idevenement
+                    AND e.idevenement = :idEvt """,idEvt = idEvenement)
+                    
+    except cx_Oracle.Error as e:
+        return {"error": str(e)}
+    return {"amount": cursor.fetchone()[0]}
+
+@app.route("/getPersonalAmountTransactionInEvent",methods=["POST"])
+def getPersonalAmountTransactionInEvent():
+    conn = ConnectionBD()
+
+    content = request.json
+    cursor = conn.cursor()
+    idUtilisateur = content["uniqueID"]
+    idEvenement = content["idEvenement"]
+    try:
+        cursor.execute(
+            """ select login from utilisateur where uniqueID = :uniqueID """, uniqueID=idUtilisateur)
+        login = cursor.fetchone()[0]
+        cursor.execute(""" select sum(montantPerso.mtn) from 
+            (select  pt.montant as mtn from 
+            transaction t,  participantstransaction pt, evenement e
+                WHERE 
+                    t.idtransaction = pt.idtransaction 
+                    and t.idevenement = e.idevenement
+                    AND e.idevenement = :idEvt
+                    AND pt.loginparticipant=:login) montantPerso""",idEvt = idEvenement, login = login)
+    except cx_Oracle.Error as e:
+        return {"error": str(e)}
+    return {"amount": cursor.fetchone()[0]}
+
+@app.route("/getLogsTransaction",methods=["POST"])
+def getLogsTransaction():
+    conn = ConnectionBD()
+
+    content = request.json
+    cursor = conn.cursor()
+    idEvenement = content["idEvenement"]
+    try:
+        
+        cursor.execute(""" select st.etat, st.montant,u.login,t.description from suivitransaction st, transaction t, evenement e, utilisateur u where
+        e.idevenement = t.idevenement and t.idtransaction = st.idtransaction and st.idutilisateur = u.uniqueID
+        and t.idevenement = :idEvt  ORDER BY t.datetransaction desc""",idEvt = idEvenement)
+        myresult = cursor.fetchall()
+        compteurIdJson = 0
+        texteResultat = {}
+        if(len(myresult) > 0):
+            for i in myresult:
+               
+                json = {
+                    "etat": i[0],
+                    "montant": i[1],
+                    "login": i[2],
+                    "description": i[3],
+                }
+               
+                texteResultat[str(compteurIdJson)] = json
+                compteurIdJson += 1      
+    except cx_Oracle.Error as e:
+        return {"error": str(e)}
+    return texteResultat
 
 @app.route("/getTotalAmountTransactionCalendar", methods=["POST"])
 def getTotalAmountTransactionCalendar():
@@ -871,7 +948,7 @@ def getTotalAmountTransactionCalendar():
                 AND pt.idtransaction = st.idtransaction 
                 and e.idevenement = ce.idevenement 
                 and e.idevenement = t.idevenement 
-                and ce.idcalendrier = :idCalendrier 
+                and ce.idcalendrier = :idCalendrier ORDER BY t.datetransaction desc
                 """, idCalendrier=idCalendrier)
         amount = cursor.fetchone()[0]
     except cx_Oracle.Error as e:
@@ -909,7 +986,7 @@ def getTransactionsFromEvent():
 #                 f1, (select login,uniqueid from utilisateur ) f2 WHERE f1.idutilisateur = f2.uniqueID""", idCalendrier=idCalendrier, login=login, idEvent=idEvent)
         cursor.execute("""select f1.montant, f1.description, f1.idtransaction, to_char(f1.datetransaction,'YYYY-MM-DD') as datetransaction,f1.currency,f1.idutilisateur as idu, u.login FROM transaction f1, utilisateur u
         WHERE u.uniqueID = f1.idutilisateur
-        AND  f1.idevenement = :idEvent """,idEvent = idEvent)
+        AND  f1.idevenement = :idEvent ORDER BY f1.datetransaction desc """,idEvent = idEvent)
         myresult = cursor.fetchall()
         print(myresult)
         compteurIdJson = 0
