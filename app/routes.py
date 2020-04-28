@@ -609,15 +609,16 @@ def modifEvent():
     global connexion
 
     conn = ConnectionBD()
-    conn = ConnectionBD()
     mycursor = conn.cursor()
     content = request.json
     # Récupération des données du JSON envoyé
     idEvenement = content['idEvenement']
     dateDebut = content['dateDebut']
+    heureDebut = content['heureDebut']
     nomEvenement = content['nomEvenement']
     description = content['description']
     dateFin = content['dateFin']
+    heureFin = content['heureFin']
     print("idEvenement --> ", idEvenement)
     # Creation cursor
     mycursor.execute("""SELECT * FROM Evenement WHERE idEvenement = :idEvenement """,
@@ -630,6 +631,7 @@ def modifEvent():
         texteResultat = "Cet evenement n'existe pas"
         conn.close()
     else:
+        print("date:" + dateDebut+"/"+heureDebut)
         mycursor.execute("""UPDATE Evenement SET dateDebut = :dateDebut, nomEvenement = :nomEvenement, description = :description, dateFin = :dateFin    WHERE idEvenement = :idEvenement """,
                          idEvenement=idEvenement, dateDebut=dateDebut, dateFin=dateFin, description=description, nomEvenement=nomEvenement)
         texteResultat = "updated"
