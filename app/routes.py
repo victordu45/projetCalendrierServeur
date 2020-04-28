@@ -714,6 +714,7 @@ def isAdmin():
     global connexion
     conn = ConnectionBD()
     mycur = conn.cursor()
+    content = request.json
 
     conn = ConnectionBD()
     uniqueID = content['login']
