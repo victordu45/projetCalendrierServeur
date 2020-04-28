@@ -43,13 +43,13 @@ def handle_msg(msg):
   (login,)=cursorInsertMsg.fetchone()
 
   cursorInsertMsg.execute("""
-  SELECT SYSTIMESTAMP FROM dual
+  SELECT TO_CHAR(current_timestamp, 'DD/MM/YYYY, HH12:MI AM') FROM dual
   """)
   (date,)=cursorInsertMsg.fetchone()
   print(date)
 
 
-  send({"user" : login, "message" : contenuSocket, "createdAt" : date, "idUtilisateur" : proprietaire},room = msg["room"])
+  send({"user" : login, "message" : contenuSocket, "createdAt" : str(datetime.strptime(date, '%d/%m/%Y, %I:%M %p')), "idUtilisateur" : proprietaire},room = msg["room"])
 
   cursorInsertMsg.execute("""insert into message (contenu,idCalendrier,idProprietaire) values (utl_raw.cast_to_raw(:contenu), :idCal, :idProprio)""",
     contenu=contenuSocket, idCal=idCalSocket,idProprio=proprietaire)
