@@ -231,7 +231,7 @@ def getEventsFromDay():
                 "couleurTheme": i[1],
                 "dateDebut": i[2],
                 "dateFin": i[3],
-                # "description" : i[4].read(),
+                "description" : i[4].read(),
                 "idEvenement": i[6]
             }
             texteResultat[str(compteurIdJson)] = json
