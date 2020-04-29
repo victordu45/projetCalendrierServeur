@@ -447,16 +447,14 @@ def verifToken():
         print("heure actuelle : ", datetime.fromtimestamp(int(
             date_actuelle_decoupe[0])), " heure incremente ", datetime.fromtimestamp(int(token_decoupe[6])))
         print("Token invalide")
-        return "token invalide"
-    else:
-        print("heure actuelle : ", datetime.fromtimestamp(int(
-            date_actuelle_decoupe[0])), " heure incremente ", datetime.fromtimestamp(int(token_decoupe[6])))
-        print("Token valide")
-        print("dans if", token_decoupe_slash[1], uniqueID)
-        mycursor.execute("""INSERT INTO utilisateurCalendrier (idcalendrier, idutilisateur, idutilisateurcalendrier, dateajoutinvite, droits) values (:idCalendrier,:idUtilisateur,ug_idutilisateurcalendrier_seq.nextval,sysdate, 'r')""",
-                         idCalendrier=token_decoupe_slash[1], idUtilisateur=uniqueID)
-        conn.commit()
-        return "token valide"
+        return {"result" : "token invalide"}
+    print("heure actuelle : ", datetime.fromtimestamp(int(date_actuelle_decoupe[0])), " heure incremente ", datetime.fromtimestamp(int(token_decoupe[6])))
+    print("Token valide")
+    print("dans if", token_decoupe_slash[1], uniqueID)
+    mycursor.execute("""INSERT INTO utilisateurCalendrier (idcalendrier, idutilisateur, idutilisateurcalendrier, dateajoutinvite, droits) values (:idCalendrier,:idUtilisateur,ug_idutilisateurcalendrier_seq.nextval,sysdate, 'r')""",
+                    idCalendrier=token_decoupe_slash[1], idUtilisateur=uniqueID)
+    conn.commit()
+    return {"result" : "token valide"}
 
 
 @app.route('/addCalendar', methods=['POST'])
