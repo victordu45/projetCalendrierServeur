@@ -191,7 +191,7 @@ def getEventsFromPersonalCalendar():
                 "couleurTheme": i[1],
                 "dateDebut": i[2],
                 "dateFin": i[3],
-                # "description" : i[4].read(),
+                "description" : i[4].read(),
                 "idEvenement": i[5]
             }
             texteResultat[str(compteurIdJson)] = json
@@ -631,9 +631,9 @@ def modifEvent():
         texteResultat = "Cet evenement n'existe pas"
         conn.close()
     else:
-        print("date:" + dateDebut+"/"+heureDebut)
-        mycursor.execute("""UPDATE Evenement SET dateDebut = :dateDebut, nomEvenement = :nomEvenement, description = :description, dateFin = :dateFin    WHERE idEvenement = :idEvenement """,
-                         idEvenement=idEvenement, dateDebut=dateDebut, dateFin=dateFin, description=description, nomEvenement=nomEvenement)
+        print("date:" + dateDebut+" "+heureDebut)
+        mycursor.execute("""UPDATE Evenement SET dateDebut = TO_DATE(:dateDebut, 'YYYY-MM-DD HH24:MI'), nomEvenement = :nomEvenement, description = :description, dateFin = TO_DATE(:dateFin, 'YYYY-MM-DD HH24:MI')  WHERE idEvenement = :idEvenement """,
+                         idEvenement=idEvenement, dateDebut=dateDebut + " " + heureDebut, dateFin=dateFin + " " + heureFin, description=description, nomEvenement=nomEvenement)
         texteResultat = "updated"
         conn.commit()
         conn.close()
